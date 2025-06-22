@@ -425,19 +425,6 @@ _symbols_multilingual = {
             ("°", " 도 "),
         ]
     ],
-    "vi": [
-        # Vietnamese
-        (re.compile(r"%s" % re.escape(x[0]), re.IGNORECASE), x[1])
-        for x in [
-            ("&", " và "),
-            ("@", " tại "),
-            ("%", " phần trăm "),
-            ("#", " số "),
-            ("$", " đô la "),
-            ("£", " bảng Anh "),
-            ("°", " độ "),
-        ]
-    ],
 }
 
 
@@ -463,7 +450,6 @@ _ordinal_re = {
     "tr": re.compile(r"([0-9]+)(\.|inci|nci|uncu|üncü|\.)"),
     "hu": re.compile(r"([0-9]+)(\.|adik|edik|odik|edik|ödik|ödike|ik)"),
     "ko": re.compile(r"([0-9]+)(번째|번|차|째)"),
-    "vi": re.compile(r"([0-9]+)(th|st|nd|rd)"),
 }
 _number_re = re.compile(r"[0-9]+")
 _currency_re = {
@@ -515,7 +501,6 @@ def _expand_currency(m, lang="en", currency="USD"):
         "tr": ", ",
         "hu": ", ",
         "ko": ", ",
-        "vi": ", ",
     }
 
     if amount.is_integer():
@@ -626,7 +611,6 @@ class VoiceBpeTokenizer:
             "ja": 71,
             "hu": 224,
             "ko": 95,
-            "vi": 250,
         }
 
     @cached_property
@@ -637,7 +621,7 @@ class VoiceBpeTokenizer:
 
     def check_input_length(self, txt, lang):
         lang = lang.split("-")[0]  # remove the region
-        limit = self.char_limits.get(lang, 250)
+        limit = self.char_limits.get(lang, 300)
         if len(txt) > limit:
             print(
                 f"[!] Warning: The text length exceeds the character limit of {limit} for language '{lang}', this might cause truncated audio."
@@ -655,11 +639,9 @@ class VoiceBpeTokenizer:
         elif lang == "hi":
             # @manmay will implement this
             txt = basic_cleaners(txt)
-        elif lang == "vi":
-            # @manmay will implement this
-            txt = basic_cleaners(txt)
         else:
-            raise NotImplementedError(f"Language '{lang}' is not supported.")
+            txt = basic_cleaners(txt)
+            # print(f"[!] Warning: Preprocess [Language '{lang}'] text is not implemented, use `basic_cleaners` instead.")
         return txt
 
     def encode(self, txt, lang):

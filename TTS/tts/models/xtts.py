@@ -523,7 +523,7 @@ class Xtts(BaseTTS):
         gpt_cond_latent = gpt_cond_latent.to(self.device)
         speaker_embedding = speaker_embedding.to(self.device)
         if enable_text_splitting:
-            text = split_sentence(text, language, self.tokenizer.char_limits.get(language, 250))
+            text = split_sentence(text, language, self.tokenizer.char_limits[language])
         else:
             text = [text]
 
@@ -553,7 +553,6 @@ class Xtts(BaseTTS):
                     output_attentions=False,
                     **hf_generate_kwargs,
                 )
-
                 expected_output_len = torch.tensor(
                     [gpt_codes.shape[-1] * self.gpt.code_stride_len], device=text_tokens.device
                 )
@@ -576,8 +575,6 @@ class Xtts(BaseTTS):
 
                 gpt_latents_list.append(gpt_latents.cpu())
                 wavs.append(self.hifigan_decoder(gpt_latents, g=speaker_embedding).cpu().squeeze())
-
-            torch.cuda.empty_cache()
 
         return {
             "wav": torch.cat(wavs, dim=0).numpy(),
@@ -636,7 +633,7 @@ class Xtts(BaseTTS):
         gpt_cond_latent = gpt_cond_latent.to(self.device)
         speaker_embedding = speaker_embedding.to(self.device)
         if enable_text_splitting:
-            text = split_sentence(text, language, self.tokenizer.char_limits.get(language, 250))
+            text = split_sentence(text, language, self.tokenizer.char_limits[language])
         else:
             text = [text]
 

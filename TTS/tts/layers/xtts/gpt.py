@@ -184,63 +184,6 @@ class GPT(nn.Module):
             # XTTS v1
             self.prompt_embedding = nn.Embedding(self.num_audio_tokens, model_dim)
             self.prompt_pos_embedding = LearnedPositionEmbeddings(24 * 9, model_dim)
-    
-    def resize_text_embeddings(self, new_num_tokens: int):
-
-        old_embeddings_requires_grad = self.text_embedding.weight.requires_grad
-
-        old_num_tokens, old_embedding_dim = self.text_embedding.weight.size()
-        if old_num_tokens == new_num_tokens:
-            return
-        
-        new_embeddings = nn.Embedding(
-            new_num_tokens,
-            old_embedding_dim,
-            device=self.text_embedding.weight.device,
-            dtype=self.text_embedding.weight.dtype,
-        )
-
-        # numbers of tokens to copy
-        n = min(old_num_tokens, new_num_tokens)
-
-        new_embeddings.weight.data[:n, :] = self.text_embedding.weight.data[:n, :]
-
-        self.text_embedding.weight.data = new_embeddings.weight.data
-        self.text_embedding.num_embeddings = new_embeddings.weight.data.shape[0]
-        if self.text_embedding.padding_idx is not None and (new_num_tokens - 1) < self.text_embedding.padding_idx:
-            self.text_embedding.padding_idx = None
-
-        
-        self.text_embedding.requires_grad_(old_embeddings_requires_grad)
-
-    def resize_text_head(self, new_num_tokens: int): 
-        old_lm_head_requires_grad = self.text_head.weight.requires_grad
-
-        old_num_tokens, old_lm_head_dim = self.text_head.weight.size()
-
-        new_lm_head_shape = (old_lm_head_dim, new_num_tokens)
-        has_new_lm_head_bias = self.text_head.bias is not None
-
-        new_lm_head = nn.Linear(
-            *new_lm_head_shape,
-            bias=has_new_lm_head_bias,
-            device=self.text_head.weight.device,
-            dtype=self.text_head.weight.dtype,
-        )
-
-        num_tokens_to_copy = min(old_num_tokens, new_num_tokens)
-
-        new_lm_head.weight.data[:num_tokens_to_copy, :] = self.text_head.weight.data[:num_tokens_to_copy, :]
-
-        # Copy bias weights to new lm head
-        if has_new_lm_head_bias:
-            new_lm_head.bias.data[:num_tokens_to_copy] = self.text_head.bias.data[:num_tokens_to_copy]
-
-        self.text_head = new_lm_head
-
-        self.text_head.requires_grad_(old_lm_head_requires_grad)
-        pass
-
 
     def get_grad_norm_parameter_groups(self):
         return {
